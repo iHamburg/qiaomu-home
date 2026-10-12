@@ -4,7 +4,7 @@ import type QiaomuHomePlugin from "./main";
 import { cardAction, fieldRow } from "./card-ui";
 import { installState, openCommunityPluginSettings, openPluginPage, runCommand, type InstallState } from "./ecosystem";
 import { L } from "./i18n";
-import { moduleOptions, type ModuleOptions } from "./settings";
+import { isDataviewInstance, moduleOptions, type ModuleOptions } from "./settings";
 import { INTEGRATIONS, type IntegrationId } from "./integration-catalog";
 export { INTEGRATIONS, isIntegration, type IntegrationId } from "./integration-catalog";
 
@@ -60,12 +60,13 @@ export function kanbanSummary(markdown: string): { lanes: number; cards: number;
   return { lanes, cards, open };
 }
 
-export function renderIntegration(parent: HTMLElement, plugin: QiaomuHomePlugin, id: IntegrationId, pageId: string): void {
-  const app = plugin.app, config = INTEGRATIONS[id], options = moduleOptions(plugin.settings, id, pageId);
+export function renderIntegration(parent: HTMLElement, plugin: QiaomuHomePlugin, id: IntegrationId | string, pageId: string): void {
+  const effectiveId: IntegrationId = isDataviewInstance(id) ? "dataview-query" : id as IntegrationId;
+  const app = plugin.app, config = INTEGRATIONS[effectiveId], options = moduleOptions(plugin.settings, id, pageId);
   const card = parent.createDiv({ cls: "qh-card" }); card.dataset.module = id;
   const head = card.createDiv({ cls: "qh-card-head" });
   setIcon(head.createSpan({ cls: "qh-card-icon" }), config.icon);
-  head.createSpan({ cls: "qh-card-title", text: L(config.zh, config.en) });
+  head.createSpan({ cls: "qh-card-title", text: options.customTitle || L(config.zh, config.en) });
   const state = installState(app, config.plugin);
   if (state !== "enabled") { renderPluginGuide(card, app, { pluginId: config.plugin, pluginName: config.pluginName, pitch: L(config.description, config.descriptionEn), state, repo: config.repo }); return; }
   const body = card.createDiv({ cls: "qh-native-preview" });
@@ -100,7 +101,7 @@ export function renderIntegration(parent: HTMLElement, plugin: QiaomuHomePlugin,
     return;
   }
 
-  if (id === "dataview-query") {
+  if (effectiveId === "dataview-query") {
     const dataview = pluginInstance<{ api?: DataviewApiLike }>(app, "dataview")?.api;
     if (!dataview) { message(L("Dataview 还在建立索引，稍后刷新", "Dataview is still indexing")); return; }
     const query = dataviewQuery(options);
