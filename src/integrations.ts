@@ -107,6 +107,17 @@ export function renderIntegration(parent: HTMLElement, plugin: QiaomuHomePlugin,
     if (query.render === "native") {
       if (typeof dataview.execute !== "function") { message(L("请把 Dataview 插件更新到新版本", "Update the Dataview plugin to a newer version")); return; }
       const host = body.createDiv({ cls: "qh-dataview" });
+      // Dataview renders internal links as <a class="internal-link">; Home's ItemView does not
+      // handle them automatically, so we intercept clicks and open the note in the Home tab.
+      host.addEventListener("click", (event) => {
+        const anchor = (event.target as HTMLElement).closest?.("a.internal-link") as HTMLAnchorElement | null;
+        if (!anchor) return;
+        event.preventDefault();
+        const href = anchor.dataset.href ?? anchor.getAttribute("href") ?? "";
+        if (!href) return;
+        const file = app.metadataCache.getFirstLinkpathDest(href, "");
+        if (file) void openFromHome(plugin, card, file, event);
+      });
       // Dataview renders a live-updating view and cleans up when the card DOM is removed.
       void Promise.resolve(dataview.execute(query.source, host, plugin, "")).catch(() => {
         if (card.isConnected) { host.empty(); host.createDiv({ cls: "qh-card-empty", text: L("查询失败", "Query failed") }); }
