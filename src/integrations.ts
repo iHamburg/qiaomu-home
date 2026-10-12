@@ -211,6 +211,7 @@ interface DataviewApiLike {
 
 /** Compose a beginner-safe DQL query from GUI options; users never see the syntax. */
 export function dataviewQuery(options: ModuleOptions): { render: "rows" | "native"; source: string } {
+  if (options.sourceKind === "custom" && options.customDql?.trim()) return { render: "native", source: options.customDql.trim() };
   const value = (options.sourceValue ?? "").trim().replace(/^#/, "").replace(/^"|"$/g, "");
   const scope = options.sourceKind === "tag" && value ? `FROM #${value}` : options.sourceKind === "folder" && value ? `FROM "${value}"` : 'FROM ""';
   const order = options.sortBy === "name" ? "file.name ASC" : options.sortBy === "ctime" ? "file.ctime DESC" : "file.mtime DESC";

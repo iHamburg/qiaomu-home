@@ -51,11 +51,13 @@ export interface ModuleOptions {
   /** Dataview card: what the query shows. Unset means notes. */
   view?: "notes" | "table" | "tasks";
   /** Dataview card: what the query ranges over. Unset means the whole vault. */
-  sourceKind?: "all" | "tag" | "folder";
+  sourceKind?: "all" | "tag" | "folder" | "custom";
   /** Dataview card: tag name (no #) or folder path. */
   sourceValue?: string;
   /** Dataview card: comma-separated frontmatter fields for the table view. */
   fields?: string;
+  /** Dataview card: raw DQL entered by the user (only used when sourceKind is "custom"). */
+  customDql?: string;
   /** Dataview card: hide completed tasks. Unset means true. */
   onlyOpen?: boolean;
   /** Dataview card: result order. Unset means recent edits first. */
@@ -340,9 +342,10 @@ function normalizeModules(value: unknown): Record<string, ModuleOptions> {
       ...(typeof candidate.includeOverdue === "boolean" ? { includeOverdue: candidate.includeOverdue } : {}),
       ...(typeof candidate.openAll === "boolean" ? { openAll: candidate.openAll } : {}),
       ...(candidate.view === "table" || candidate.view === "tasks" ? { view: candidate.view } : {}),
-      ...(candidate.sourceKind === "tag" || candidate.sourceKind === "folder" ? { sourceKind: candidate.sourceKind } : {}),
+      ...(candidate.sourceKind === "tag" || candidate.sourceKind === "folder" || candidate.sourceKind === "custom" ? { sourceKind: candidate.sourceKind } : {}),
       ...(typeof candidate.sourceValue === "string" ? { sourceValue: candidate.sourceValue.trim().replace(/^#/, "").replace(/^"|"$/g, "").slice(0, 200) } : {}),
       ...(typeof candidate.fields === "string" ? { fields: candidate.fields.slice(0, 200) } : {}),
+      ...(typeof candidate.customDql === "string" ? { customDql: candidate.customDql.slice(0, 2000) } : {}),
       ...(typeof candidate.onlyOpen === "boolean" ? { onlyOpen: candidate.onlyOpen } : {}),
       ...(candidate.sortBy === "ctime" || candidate.sortBy === "name" ? { sortBy: candidate.sortBy } : {}),
       visible: typeof candidate.visible === "boolean" ? candidate.visible : true,

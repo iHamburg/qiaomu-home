@@ -321,23 +321,36 @@ export class ModuleOptionsModal extends Modal {
           wrap.empty();
           const current = moduleOptions(this.plugin.settings, this.moduleId, this.pageId);
           const view = current.view ?? "notes", sourceKind = current.sourceKind ?? "all";
-          new Setting(wrap).setName(L("显示内容", "Content")).setDesc(L("把符合条件的笔记、属性或任务放到卡片上。", "Show matching notes, properties, or tasks on the card."))
-            .addDropdown(dropdown => dropdown.addOptions({ notes: L("笔记列表", "Notes"), table: L("属性表格", "Property table"), tasks: L("任务", "Tasks") })
-              .setValue(view).onChange(value => { void persist({ view: value as "table" | "tasks" }); render(); }));
+          if (sourceKind !== "custom") {
+            new Setting(wrap).setName(L("显示内容", "Content")).setDesc(L("把符合条件的笔记、属性或任务放到卡片上。", "Show matching notes, properties, or tasks on the card."))
+              .addDropdown(dropdown => dropdown.addOptions({ notes: L("笔记列表", "Notes"), table: L("属性表格", "Property table"), tasks: L("任务", "Tasks") })
+                .setValue(view).onChange(value => { void persist({ view: value as "table" | "tasks" }); render(); }));
+          }
           new Setting(wrap).setName(L("范围", "Scope"))
-            .addDropdown(dropdown => dropdown.addOptions({ all: L("整个知识库", "Whole vault"), tag: L("带某个标签的笔记", "Notes with a tag"), folder: L("某个文件夹", "A folder") })
-              .setValue(sourceKind).onChange(value => { void persist({ sourceKind: value as "tag" | "folder" }); render(); }));
+            .addDropdown(dropdown => dropdown.addOptions({ all: L("整个知识库", "Whole vault"), tag: L("带某个标签的笔记", "Notes with a tag"), folder: L("某个文件夹", "A folder"), custom: L("自定义语句", "Custom query") })
+              .setValue(sourceKind).onChange(value => { void persist({ sourceKind: value as "tag" | "folder" | "custom" }); render(); }));
+          if (sourceKind === "custom") {
+            const setting = new Setting(wrap).setName(L("DQL 查询语句", "DQL query")).setDesc(L("直接输入 Dataview 查询语句，支持 LIST、TABLE、TASK 和 CALENDAR。", "Enter a raw Dataview query. Supports LIST, TABLE, TASK and CALENDAR."));
+            setting.settingEl.addClass("qh-dql-setting");
+            setting.addTextArea(input => {
+              input.setPlaceholder(L('例如：TABLE status, due FROM #项目 SORT due ASC', 'e.g. TABLE status, due FROM #project SORT due ASC'));
+              input.setValue(current.customDql ?? "");
+              input.inputEl.addClass("qh-dql-input");
+              input.inputEl.rows = 5;
+              autoSave(this.contentEl, setting, input.inputEl, value => persist({ customDql: value.slice(0, 2000) }));
+            });
+          }
           if (sourceKind === "tag") {
             const setting = new Setting(wrap).setName(L("标签", "Tag")).setDesc(L("填笔记上已有的标签，不用带 # 号。", "A tag your notes already use, without the #."));
             setting.addText(input => { input.setPlaceholder(L("例如：项目", "e.g. project")); input.setValue(current.sourceValue ?? ""); autoSave(this.contentEl, setting, input.inputEl, value => persist({ sourceValue: value })); });
           }
           if (sourceKind === "folder") folderDropdown(wrap, this.plugin, L("文件夹", "Folder"), L("整个知识库", "Whole vault"), current.sourceValue ?? "", value => { void persist({ sourceValue: value }); });
-          if (view === "table") {
+          if (sourceKind !== "custom" && view === "table") {
             const setting = new Setting(wrap).setName(L("显示哪些属性", "Properties to show")).setDesc(L("笔记属性里的字段名，用逗号分隔。留空则按笔记列表显示。", "Frontmatter property names, comma separated. Empty falls back to notes."));
             setting.addText(input => { input.setPlaceholder(L("例如：状态, 截止", "e.g. status, due")); input.setValue(current.fields ?? ""); autoSave(this.contentEl, setting, input.inputEl, value => persist({ fields: value })); });
           }
-          if (view === "tasks") new Setting(wrap).setName(L("只看未完成", "Only unfinished")).addToggle(toggle => toggle.setValue(current.onlyOpen ?? true).onChange(value => { void persist({ onlyOpen: value }); }));
-          new Setting(wrap).setName(L("排序", "Sort")).addDropdown(dropdown => dropdown.addOptions({ mtime: L("最近修改优先", "Recently edited first"), ctime: L("最近创建优先", "Recently created first"), name: L("按名称", "By name") })
+          if (sourceKind !== "custom" && view === "tasks") new Setting(wrap).setName(L("只看未完成", "Only unfinished")).addToggle(toggle => toggle.setValue(current.onlyOpen ?? true).onChange(value => { void persist({ onlyOpen: value }); }));
+          if (sourceKind !== "custom") new Setting(wrap).setName(L("排序", "Sort")).addDropdown(dropdown => dropdown.addOptions({ mtime: L("最近修改优先", "Recently edited first"), ctime: L("最近创建优先", "Recently created first"), name: L("按名称", "By name") })
             .setValue(current.sortBy ?? "mtime").onChange(value => { void persist({ sortBy: value as "ctime" | "name" }); }));
         };
         render();

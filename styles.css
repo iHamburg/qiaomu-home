@@ -1120,6 +1120,9 @@ body:not(.is-mobile) .workspace-leaf-content[data-type="qiaomu-home"] > .view-he
 .qh-ui .qh-focus-done.is-done span { text-decoration: line-through; color: var(--qh-muted, var(--text-muted)); }
 .qh-root .qh-discovery-site[aria-pressed="true"] { border-color: var(--qh-focus); }
 .modal.qh-ui textarea { width: min(320px, 60vw); font-family: var(--font-monospace); font-size: var(--font-ui-small); }
+.modal.qh-ui .qh-dql-setting { flex-direction: column; align-items: flex-start; }
+.modal.qh-ui .qh-dql-setting .setting-item-control { width: 100%; }
+.modal.qh-ui textarea.qh-dql-input { width: 100%; min-height: 6em; height: auto; resize: vertical; font-family: var(--font-monospace); font-size: var(--font-ui-small); line-height: 1.5; padding: 8px 12px; }
 .qh-ui .qh-native-preview > .qh-native-open { align-self: flex-start; }
 
 /* ---------------------------------------------------------------------------
